@@ -26,7 +26,7 @@ Zen2  (3xxx-4xxxS/G/H/U-5700U-5500U-5300U-7520U-7320U) AVX2     x86-64-v3 / znve
 Zen3  (5xxx-7330U-7530U-7730U)                         AVX2     x86-64-v3 / znver3
 Zen3+ (6xxx-7xxxH/U)                                   AVX2     x86-64-v3 / znver3
 Zen4  (7xxx-8xxxG)                                     AVX512   x86-64-v4 / znver4
-Zen5  (9xxx-AI 3xx)                                    AVX512   x86-64-v4 / znver4
+Zen5  (9xxx-AI 3xx)                                    AVX512   x86-64-v4 / znver5
 ```
 ### Intel (Desktop)
 ```js
