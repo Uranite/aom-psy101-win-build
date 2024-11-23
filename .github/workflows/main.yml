@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          choco install llvm ninja git perl 7zip -y
+          choco install llvm ninja git strawberryperl 7zip -y
           refreshenv
       - name: Clone repository
         run: |
