@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: |
           choco upgrade llvm
-          choco install ninja git strawberryperl 7zip -y
+          choco install nasm ninja git strawberryperl 7zip -y
           Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
           refreshenv
       - name: Clone repository
