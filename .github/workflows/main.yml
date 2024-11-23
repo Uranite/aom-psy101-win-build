@@ -1,0 +1,123 @@
+name: Build AOM-PSY
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        arch: [
+          'x86-64', 'x86-64-v2', 'x86-64-v3', 'x86-64-v4',
+          'znver1', 'znver2', 'znver3', 'znver4', 'znver5',
+          'haswell', 'broadwell', 'skylake',
+          'rocketlake', 'alderlake', 'raptorlake'
+        ]
+
+    steps:
+      - name: Install dependencies
+        run: |
+          choco install llvm ninja git perl 7zip -y
+          refreshenv
+
+      - name: Clone repository
+        run: |
+          git clone --depth 1 https://gitlab.com/damian101/aom-psy101.git .
+          $commit = git rev-parse HEAD
+          echo "COMMIT=$commit" >> $env:GITHUB_ENV
+
+      - name: Configure and Build
+        run: |
+          cmake --fresh -B aom_build -G Ninja `
+            -DBUILD_SHARED_LIBS=0 `
+            -DENABLE_DOCS=0 `
+            -DCONFIG_TUNE_BUTTERAUGLI=0 `
+            -DCONFIG_TUNE_VMAF=0 `
+            -DCONFIG_AV1_DECODER=0 `
+            -DENABLE_TESTS=0 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_CXX_FLAGS="-flto -march=${{ matrix.arch }}" `
+            -DCMAKE_C_FLAGS="-flto -march=${{ matrix.arch }}"
+          ninja -C aom_build
+
+      - name: Create architecture-specific directory
+        run: |
+          mkdir -p "aom_build/${{ matrix.arch }}"
+          mv aom_build/aomenc.exe "aom_build/${{ matrix.arch }}/"
+
+      - name: Upload artifacts to workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: aomenc-${{ matrix.arch }}
+          path: aom_build/${{ matrix.arch }}/aomenc.exe
+          retention-days: 1
+          
+      - name: Save commit SHA
+        run: |
+          echo "${{ env.COMMIT }}" > commit.txt
+
+      - name: Upload commit SHA
+        uses: actions/upload-artifact@v4
+        with:
+          name: commit-sha
+          path: commit.txt
+          retention-days: 1
+
+  release:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - name: Install 7-Zip
+        run: |
+          choco install 7zip -y
+          refreshenv
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Get commit SHA
+        run: |
+          $commit = Get-Content artifacts/commit.txt
+          echo "COMMIT=$commit" >> $env:GITHUB_ENV
+          
+      - name: Move executables to build directory
+        run: |
+          mkdir aom_build
+          Move-Item artifacts/aomenc-* aom_build/
+
+      - name: Create 7z archive
+        run: |
+          7z a -t7z -mx=9 aom_build.7z ./aom_build/*
+
+      - name: Calculate SHA256
+        run: |
+          $hash = (Get-FileHash -Algorithm SHA256 -Path aom_build.7z).Hash.ToLower()
+          echo "SHA256: $hash"
+          echo "HASH=$hash" >> $env:GITHUB_ENV
+          echo "$hash" > sha256sum.txt
+
+      - name: Delete old release
+        uses: dev-drprasad/delete-tag-and-release@v1.0
+        with:
+          tag_name: latest
+          delete_release: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: Latest Build - ${{ env.COMMIT }}
+          body: |
+            Latest automated build of AOM-PSY
+            Commit: ${{ env.COMMIT }}
+            SHA256: ${{ env.HASH }}
+          files: |
+            aom_build.7z
+            sha256sum.txt
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
