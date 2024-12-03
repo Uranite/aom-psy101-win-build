@@ -13,23 +13,16 @@ jobs:
           'rocketlake', 'alderlake', 'raptorlake'
         ]
     steps:
-      - name: Cache Chocolatey packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.chocolatey
-          key: chocolatey-${{ runner.os }}
-      
       - name: Install dependencies
-        run: |
-          choco upgrade llvm
-          choco install nasm ninja git strawberryperl 7zip -y
-      
+        uses: azure/chocolatey-action@v2
+        with:
+          command: install
+          packages: llvm,nasm,ninja,git,strawberryperl,7zip
       - name: Clone repository
         run: |
           git clone --depth 1 https://gitlab.com/damian101/aom-psy101.git .
-        env:
-          COMMIT: ${{ github.sha }}
-      
+          $commit = git rev-parse HEAD
+          echo "COMMIT=$commit" >> $env:GITHUB_ENV
       - name: Configure and Build
         run: |
           cmake --fresh -B aom_build -G Ninja `
