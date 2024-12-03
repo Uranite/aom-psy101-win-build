@@ -13,17 +13,23 @@ jobs:
           'rocketlake', 'alderlake', 'raptorlake'
         ]
     steps:
+      - name: Cache Chocolatey packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.chocolatey
+          key: chocolatey-${{ runner.os }}
+      
       - name: Install dependencies
         run: |
           choco upgrade llvm
           choco install nasm ninja git strawberryperl 7zip -y
-          Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
-          refreshenv
+      
       - name: Clone repository
         run: |
           git clone --depth 1 https://gitlab.com/damian101/aom-psy101.git .
-          $commit = git rev-parse HEAD
-          echo "COMMIT=$commit" >> $env:GITHUB_ENV
+        env:
+          COMMIT: ${{ github.sha }}
+      
       - name: Configure and Build
         run: |
           cmake --fresh -B aom_build -G Ninja `
@@ -37,57 +43,69 @@ jobs:
             -DCMAKE_CXX_FLAGS="-flto -march=${{ matrix.arch }}" `
             -DCMAKE_C_FLAGS="-flto -march=${{ matrix.arch }}"
           ninja -C aom_build
-      - name: Create architecture-specific directory
+      
+      - name: Create architecture-specific directory and move aomenc.exe
         run: |
-          mkdir -p "aom_build/${{ matrix.arch }}"
-          mv aom_build/aomenc.exe "aom_build/${{ matrix.arch }}/"
-      - name: Upload artifacts to workflow
+          Move-Item aom_build/aomenc.exe "aom_build/${{ matrix.arch }}/"
+      
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: aomenc-${{ matrix.arch }}
           path: aom_build/${{ matrix.arch }}/aomenc.exe
           retention-days: 7
-          
+      
       - name: Save commit SHA
         run: |
           echo "${{ env.COMMIT }}" > commit.txt
+          echo "COMMIT=${{ env.COMMIT }}" >> $env:GITHUB_ENV
+      
       - name: Upload commit SHA
         uses: actions/upload-artifact@v4
         with:
           name: commit-sha
           path: commit.txt
           retention-days: 7
+
   package:
     needs: build
     runs-on: windows-latest
     steps:
+      - name: Cache Chocolatey packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.chocolatey
+          key: chocolatey-${{ runner.os }}
+      
       - name: Install 7-Zip
-        run: |
-          choco install 7zip -y
-          refreshenv
+        run: choco install 7zip -y
+      
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
+      
       - name: Get commit SHA
         run: |
           $commit = Get-Content artifacts/commit.txt
           echo "COMMIT=$commit" >> $env:GITHUB_ENV
-          
+      
       - name: Move executables to build directory
         run: |
           mkdir aom_build
           Move-Item artifacts/aomenc-* aom_build/
+      
       - name: Create 7z archive
         run: |
           7z a -t7z -mx=9 aom_build.7z ./aom_build/*
+      
       - name: Calculate SHA256
         run: |
           $hash = (Get-FileHash -Algorithm SHA256 -Path aom_build.7z).Hash.ToLower()
-          echo "SHA256: $hash"
           echo "HASH=$hash" >> $env:GITHUB_ENV
           echo "$hash" > sha256sum.txt
+      
       - name: Upload final package
         uses: actions/upload-artifact@v4
         with:
