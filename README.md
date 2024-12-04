@@ -1,6 +1,6 @@
 # aom-psy101-win-build
 
-This repository hosts unofficial Windows builds of AOM-PSY101. These builds are community-maintained and are not officially supported by the original project maintainers.
+This repository hosts unofficial Windows builds of aom-psy101. These builds are community-maintained and are not officially supported by the original project maintainers.
 
 ## About these Builds
 This is an unofficial Windows build repository. The builds are available in the [Releases](https://github.com/Uranite/aom-psy101-win-build/releases) section of this repository. Multiple builds are provided, optimized for different CPU architectures using Clang's -march options.
@@ -43,7 +43,7 @@ Raptor Lake (13-14th gen) AVX2     x86-64-v3 / raptorlake
 ```
 
 ## Original Project
-- Original repository: [AOM-PSY101 on GitLab](https://gitlab.com/damian101/aom-psy101)
+- Original repository: [aom-psy101 on GitLab](https://gitlab.com/damian101/aom-psy101)
 - License: BSD 2-Clause "Simplified" License
 
 ## License
