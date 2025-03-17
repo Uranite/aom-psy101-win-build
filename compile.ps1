@@ -10,7 +10,7 @@ if (Test-Path "aom-psy101") {
     $null = Read-Host
 } else {
     # If it doesn't exist, clone the repository
-    git clone https://gitlab.com/damian101/aom-psy101 --depth 50
+    git clone https://gitlab.com/damian101/aom-psy101 --depth 1
     Set-Location "aom-psy101"
 }
 
