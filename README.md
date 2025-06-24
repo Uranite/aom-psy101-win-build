@@ -47,4 +47,5 @@ Raptor Lake (13-14th gen) AVX2     x86-64-v3 / raptorlake
 - License: BSD 2-Clause "Simplified" License
 
 ## License
-The compiled builds are distributed under the BSD 2-Clause "Simplified" License. See the [LICENSE](https://github.com/Uranite/aom-psy101-win-build/blob/master/LICENSE) file for more information.
+The compiled builds are distributed under the BSD 2-Clause "Simplified" License. See the [LICENSE.aom-psy101](https://github.com/Uranite/aom-psy101-win-build/blob/master/LICENSE.aom-psy101) file for more information.
+However, the contents of this repository itself (i.e., the build script and this README) are licensed under the MIT License. See the LICENSE file for more information.
